@@ -31,7 +31,7 @@ To perform optimal transfer, run the following command:
 python main.py --image_u='path/to/source/image' --image_v='path/to/destination/image'
 ```
 There are other optinal options you might want to use to adapt the code to your case:
-```python
+```
 --segments, an integer which is the approximative number of desired clusters, default is 120
 --radius, an integer which is the size of the radius filtering window, default is 1.
 --epsilon, a float which is the regularization parameter for post processing, default is 0.01
