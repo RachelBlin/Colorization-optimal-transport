@@ -35,12 +35,12 @@ There are other optinal options you might want to use to adapt the code to your 
 --segments, an integer which is the approximative number of desired clusters, default is 120
 --radius, an integer which is the size of the radius filtering window, default is 1.
 --epsilon, a float which is the regularization parameter for post processing, default is 0.01
---iterations, an integer which is the number of iterations of the guided filter for post processing
+--iterations, an integer which is the number of iterations of post processing, default is 1
 ```
 
 ### Superpixel segmentation
 
-The first step is to segment an image into the desired number of superpixels. The `slic` algorithm from `scikit-image` was used to achieve this task. In this example 120 clusters were used. This figure illustrates the original source (u) and destination (v) images and their segmentation into superpixels.
+The first step is to segment an image into superpixels. The `slic` algorithm from `scikit-image` was used to achieve this task. In this example 120 clusters were used. This figure illustrates the original source (u) and destination (v) images and their segmentation into superpixels.
 
 ![Display and segmentation](examples/display_and_segmentation.png)
 
