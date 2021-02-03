@@ -6,7 +6,7 @@ The repo is under construction, only the color transfer without constraints is a
 
 The code works with `Python3.7` and requires the following librarires:
 
-```python
+```
 matplotlib==3.3.3
 numpy==1.19.5
 POT==0.7.0
