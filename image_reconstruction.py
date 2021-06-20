@@ -1,21 +1,7 @@
 import numpy as np
+
 import graph
-
-def color_palette_transfer(P, mu, Y):
-    """
-    A function to transfer the color features of clusters Y to clusters X knowing the transport matrix.
-    inputs:
-        - P: the transport matrix of X towards Y
-        - mu: the weights of clusters X
-        - Y: the clusters of image Y
-
-    returns:
-        - the color features after transfer 
-    """
-
-    T_U = np.diag(1/mu)@P@Y[:, 2:] # select only color features of Y
-
-    return T_U
+import optimal_transport
 
 def superpixels_transfer(P, mu, Y, segments):
     """
@@ -31,7 +17,7 @@ def superpixels_transfer(P, mu, Y, segments):
     """
 
     superpixels = np.zeros((segments.shape[0], segments.shape[1], 3), dtype=int)
-    T_U = color_palette_transfer(P, mu, Y)
+    T_U = optimal_transport.color_palette_transfer(P, mu, Y)
 
     for c in np.unique(segments):
         indexes = np.where(segments==c)
@@ -54,7 +40,7 @@ def image_synthesis(X, Y, P, mu, segments, image_u):
         - The new image containing the spacial features of image u and the color palette of image v
     """
 
-    T_U = color_palette_transfer(P, mu, Y) #/ 255
+    T_U = optimal_transport.color_palette_transfer(P, mu, Y) #/ 255
     X[:, 0] = X[:, 0] / image_u.shape[0]*255
     X[:, 1] = X[:, 1] / image_u.shape[1]*255
 
@@ -201,26 +187,29 @@ def filtered_image(image_u, image_w, n_iter, r, eps):
     indexes_min = np.where(w_filtered_final < 0)
     indexes_max = np.where(w_filtered_final > 255)
 
-    if len(indexes_min[0]) > 0:
+    while len(indexes_min[0]) > 0:
         w_filtered_final[indexes_min] = 0 # in case of NaN
         for id in range(len(indexes_min[0])):
             l_bound_ax0 = indexes_min[0][id] - 1
             l_bound_ax1 = indexes_min[1][id] - 1
             u_bound_ax0 = indexes_min[0][id] + 2
             u_bound_ax1 = indexes_min[1][id] + 2
-            if l_bound_ax0 == -1:
+            if l_bound_ax0  < 0:
                 l_bound_ax0 = 0
-            if l_bound_ax1 == -1:
+            if l_bound_ax1 < 0:
                 l_bound_ax1 = 0
-            if u_bound_ax0 == image_u.shape[0] + 1:
+            if u_bound_ax0 > image_u.shape[0]:
                 u_bound_ax0 = - 1
-            if u_bound_ax1 == image_u.shape[1] + 1:
+            if u_bound_ax1 >  image_u.shape[1]:
                 u_bound_ax1 = - 1
-            interpolation = w_filtered_final[l_bound_ax0:u_bound_ax0, l_bound_ax1:u_bound_ax1, indexes_min[2][id]].copy()
-            w_filtered_final[indexes_min[0][id], indexes_min[1][id], indexes_min[2][id]] = np.median(interpolation)
+            interpolation_raw = w_filtered_final[l_bound_ax0:u_bound_ax0, l_bound_ax1:u_bound_ax1, indexes_min[2][id]].copy()
+            positive_interpolation_idx = np.where(interpolation_raw > 0)
+            interpolation = interpolation_raw[positive_interpolation_idx]
+            if len(interpolation) >= 1:
+                w_filtered_final[indexes_min[0][id], indexes_min[1][id], indexes_min[2][id]] = np.median(interpolation)
+        indexes_min = np.where(w_filtered_final < 0)
     
-    
-    if len(indexes_max[0]) > 0:
+    while len(indexes_max[0]) > 0:
         w_filtered_final[indexes_max] = 0 # in case of NaN
         for id in range(len(indexes_max[0])):  
             l_bound_ax0 = indexes_max[0][id] - 1
@@ -235,7 +224,11 @@ def filtered_image(image_u, image_w, n_iter, r, eps):
                 u_bound_ax0 = - 1
             if u_bound_ax1 == image_u.shape[1] + 1:
                 u_bound_ax1 = - 1
-            interpolation = w_filtered_final[l_bound_ax0:u_bound_ax0, l_bound_ax1:u_bound_ax1, indexes_max[2][id]].copy()
-            w_filtered_final[indexes_max[0][id], indexes_max[1][id], indexes_max[2][id]] = np.median(interpolation)
+            interpolation_raw = w_filtered_final[l_bound_ax0:u_bound_ax0, l_bound_ax1:u_bound_ax1, indexes_max[2][id]].copy()
+            positive_interpolation_idx = np.where(interpolation_raw > 0)
+            interpolation = interpolation_raw[positive_interpolation_idx]
+            if len(interpolation) >= 1:
+                w_filtered_final[indexes_max[0][id], indexes_max[1][id], indexes_max[2][id]] = np.median(interpolation)
+        indexes_max = np.where(w_filtered_final > 255)
 
     return w_filtered_final
